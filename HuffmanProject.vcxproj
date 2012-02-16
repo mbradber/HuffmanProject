@@ -60,7 +60,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ByteFrequency.cpp" />
+    <ClCompile Include="FileHandler.cpp" />
+    <ClCompile Include="Huffman.cpp" />
     <ClCompile Include="Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ByteFrequency.h" />
+    <ClInclude Include="FileHandler.h" />
+    <ClInclude Include="Huffman.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
