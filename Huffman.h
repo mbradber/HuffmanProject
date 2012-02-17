@@ -1,6 +1,9 @@
 #pragma once
 #include<cstdio>
-#define MAX_BYTES 256
+#include<vector>
+#include"ByteData.h"
+
+#define NUM_BYTES 256
 
 class Huffman
 {
@@ -12,7 +15,7 @@ public:
 	void printFrequency() const;
 
 private:
-	short frequencyTable[MAX_BYTES];
+	std::vector<ByteData> dataList;
 	bool countedOnce;
 };
 

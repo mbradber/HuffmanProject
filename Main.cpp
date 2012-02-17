@@ -22,8 +22,10 @@ int main(int argc, char** argv)
 	printf("File size: %d\n", sizeof(*fileHandler.getBuffer()));
 #endif
 	unsigned t0 = clock(), t1;
+
 	huff.countBytes(fileHandler.getBuffer(), fileHandler.getFileSize());
 	huff.printFrequency();
+
 	t1 = clock() - t0;
 
 	printf("Exe Time: %d\n", t1);

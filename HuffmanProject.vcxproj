@@ -60,13 +60,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ByteFrequency.cpp" />
+    <ClCompile Include="ByteData.cpp" />
     <ClCompile Include="FileHandler.cpp" />
     <ClCompile Include="Huffman.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ByteFrequency.h" />
+    <ClInclude Include="ByteData.h" />
     <ClInclude Include="FileHandler.h" />
     <ClInclude Include="Huffman.h" />
   </ItemGroup>

@@ -24,7 +24,7 @@
     <ClCompile Include="Huffman.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ByteFrequency.cpp">
+    <ClCompile Include="ByteData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,7 +35,7 @@
     <ClInclude Include="Huffman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ByteFrequency.h">
+    <ClInclude Include="ByteData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

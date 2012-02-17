@@ -1,11 +1,11 @@
 #include "Huffman.h"
+#include<algorithm>
 
 Huffman::Huffman()
-	:countedOnce(false)
+	:dataList(NUM_BYTES), countedOnce(false)
 {
-	/*init frequency array to 0*/
-	for(int i = 0; i < MAX_BYTES; ++i)
-		frequencyTable[i] = 0;
+	for(int i = 0; i < NUM_BYTES; ++i)
+		dataList[i].setValue(ByteFrequency((unsigned char)i, 0));
 }
 
 void Huffman::countBytes(const unsigned char* const buffer, long bufferSize)
@@ -13,21 +13,22 @@ void Huffman::countBytes(const unsigned char* const buffer, long bufferSize)
 	if(!countedOnce)
 	{
 		for(int i = 0; i < bufferSize; ++i)
-			++frequencyTable[(int)buffer[i]];
+			dataList[(int)buffer[i]].getValue().Increment();
+
 		countedOnce = true;
 	}
+
+	std::sort(dataList.begin(), dataList.end());
 }
+
+
 
 void Huffman::printFrequency() const
 {
-	for(int i = 0; i < MAX_BYTES - 1; ++i)
-	{
-		if(frequencyTable[i] > 0)
-		{
-			printf("Byte:%c, ", (unsigned char)i);
-			printf("Frequency:%d\n", frequencyTable[i]);
-		}
-	}
+	std::for_each(dataList.begin(), dataList.end(), [](ByteData b){
+		if(b.getValue().getFrequency() > 0)
+			printf("Byte:%c, Frequency:%d\n", b.getValue().getData(), b.getValue().getFrequency());
+	});
 }
 
 Huffman::~Huffman()
