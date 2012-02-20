@@ -66,7 +66,7 @@ void ByteData::setParentNode(ByteData* const pn)
 
 bool operator < (const ByteData& lhs, const ByteData& rhs)
 { 
-	if(lhs.getValue().getFrequency() < rhs.getValue().getFrequency())
+	if(lhs.getValue().getFrequency() > rhs.getValue().getFrequency())
 		return true;
 	else
 		return false;

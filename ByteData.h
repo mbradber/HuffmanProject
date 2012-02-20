@@ -32,7 +32,7 @@ public:
 	void setLeftNode(ByteData* const ln);
 	void setRightNode(ByteData* const rn);
 	void setParentNode(ByteData* const pn);
-	void setCode(const std::string& bitString) { code = bitString; }
+	void setCode(const std::string& bitString) const { code = bitString; }
 
 	const ByteFrequency& getValue() const { return value; }
 	const ByteData* const getLeftNode() const { return leftNode; }
@@ -47,5 +47,5 @@ private:
 	ByteData* leftNode;
 	ByteData* rightNode;
 	ByteData* parentNode;
-	std::string code;
+	mutable std::string code;
 };

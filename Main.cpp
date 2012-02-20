@@ -24,7 +24,7 @@ int main(int argc, char** argv)
 	unsigned t0 = clock(), t1;
 
 	huff.countBytes(fileHandler.getBuffer(), fileHandler.getFileSize());
-	huff.printFrequency();
+	huff.generateCodes();
 
 	t1 = clock() - t0;
 
@@ -32,4 +32,5 @@ int main(int argc, char** argv)
 	printf("Size: %d\n", fileHandler.getFileSize());
 
 	getchar();
+	return 0;
 }
