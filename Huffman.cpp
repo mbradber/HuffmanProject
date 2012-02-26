@@ -3,10 +3,14 @@
 #include<sstream>
 
 Huffman::Huffman()
-	:dataList(NUM_BYTES), countedOnce(false), root(NULL)
+	:dataList(NUM_BYTES), lookupList(NUM_BYTES), countedOnce(false), root(NULL)
 {
 	for(int i = 0; i < NUM_BYTES; ++i)
+	{
 		dataList[i].setValue(ByteFrequency((unsigned char)i, 0));
+		lookupList[i].setValue(ByteFrequency((unsigned char)i, 0));
+	}
+
 }
 
 void Huffman::countBytes(const unsigned char* const buffer, long bufferSize)
@@ -58,13 +62,15 @@ void Huffman::buildTree()
 void Huffman::generateCodes(const ByteData* node, std::string prefix) const
 {
 	if(node->getLeftNode() != 0)
-		generateCodes(node->getLeftNode(), prefix + "0");
+		generateCodes(node->getLeftNode(), prefix + "1");
 
 	node->setCode(prefix);
+	if(node->getValue().getData() != 0)
+		lookupList[(int)node->getValue().getData()].setCode(node->getCode().c_str());
 	printf("%c : %s\n", node->getValue().getData(), node->getCode().c_str());
 
 	if(node->getRightNode() != 0)
-		generateCodes(node->getRightNode(), prefix + "1");
+		generateCodes(node->getRightNode(), prefix + "0");
 }
 
 void Huffman::display(const ByteData* const node) const

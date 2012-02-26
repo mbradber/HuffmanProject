@@ -4,11 +4,13 @@
 #include<time.h>
 #include"FileHandler.h"
 #include"Huffman.h"
+#include"BitHandler.h"
 
 int main(int argc, char** argv)
 {
 	Huffman huff;
-	FileHandler fileHandler("C:\\Users\\Acer\\DataSets\\artist.jpg");
+	BitHandler bitHandler;
+	FileHandler fileHandler("C:\\Users\\Acer\\DataSets\\moby.txt", "output");
 	fileHandler.loadFile();
 
 #ifdef DEBUG
@@ -25,6 +27,16 @@ int main(int argc, char** argv)
 
 	huff.countBytes(fileHandler.getBuffer(), fileHandler.getFileSize());
 	huff.generateCodes();
+	std::vector<ByteData> checkList = huff.getLookupList();
+	const unsigned char* const fileBuffer = fileHandler.getBuffer();
+	std::string builder = "";
+
+	for(unsigned int i = 0; i < fileHandler.getFileSize(); ++i)
+		builder += checkList[(int)fileBuffer[i]].getCode();
+
+	bitHandler.stringToBits(builder);
+	const unsigned char* const bitBuff = bitHandler.getBuffer();
+	fileHandler.writeToFile(bitBuff, bitHandler.getBufferSize());
 
 	t1 = clock() - t0;
 

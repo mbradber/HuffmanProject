@@ -27,6 +27,9 @@
     <ClCompile Include="ByteData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BitHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileHandler.h">
@@ -36,6 +39,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ByteData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BitHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
