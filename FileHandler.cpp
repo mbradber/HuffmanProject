@@ -3,7 +3,7 @@
 
 FileHandler::FileHandler(std::string fileIn, std::string fileOut)
 	:filenameIn(fileIn), fileNameOut(fileOut), iStream(fileIn, std::ios::in | std::ios::binary | std::ios::ate), 
-	buffer(NULL), fileSize(0)
+	buffer(NULL), fileSize(0), opened(false)
 {
 	if(iStream.is_open())
 	{
@@ -42,8 +42,15 @@ void FileHandler::loadFile()
 
 void FileHandler::writeToFile(const unsigned char* const byteBuffer, int bufferSize)
 {
-	if(!oStream.is_open())
-		oStream.open(fileNameOut, std::ios::out | std::ios::binary);
+	if(!opened)
+	{
+		if(!oStream.is_open())
+			oStream.open(fileNameOut, std::ios::out | std::ios::binary | std::ios::ate);
+		opened = true;
+	}
+	else
+		if(!oStream.is_open())
+			oStream.open(fileNameOut, std::ios::out | std::ios::binary | std::ios::ate | std::ios::app);
 
 	if(!oStream.is_open())
 	{

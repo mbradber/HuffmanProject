@@ -21,4 +21,5 @@ private:
 	std::ifstream iStream;
 	unsigned char* buffer;
 	unsigned long fileSize;
+	bool opened;
 };

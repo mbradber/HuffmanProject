@@ -83,4 +83,3 @@ const unsigned char* const BitHandler::getBuffer()
 	bufferHandle[byteBuffer.size()] = '\0';
 	return bufferHandle;
 }
-
