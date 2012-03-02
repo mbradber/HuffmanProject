@@ -68,8 +68,10 @@ void Huffman::generateCodes(const ByteData* node, std::string prefix) const
 
 	node->setCode(prefix);
 	if(node->getValue().getData() != 0)
+	{
 		lookupList[(int)node->getValue().getData()].setCode(node->getCode().c_str());
-	printf("%c : %s\n", node->getValue().getData(), node->getCode().c_str());
+		printf("%c : %s\n", node->getValue().getData(), node->getCode().c_str());
+	}
 
 	if(node->getRightNode() != 0)
 		generateCodes(node->getRightNode(), prefix + "1");
@@ -106,6 +108,21 @@ const unsigned char* const Huffman::getSerializedTree() const
 
 	//append null terminator to c string
 	bufferHandle[charList.size()] = '\0';
+
+	//for(int i = 0; i < charList.size(); ++i)
+	//{
+	//	if(bufferHandle[i] == '\r')
+	//		printf("Return at %d\n", i);
+	//	if(bufferHandle[i] == 't')
+	//		printf("t at %d\n", i);
+	//	if(bufferHandle[i] == '\0')
+	//		printf("NULL at %d\n", i);
+	//	if(bufferHandle[i] == 'h')
+	//		printf("h at %d\n", i);
+	//	if(bufferHandle[i] == '\n')
+	//		printf("newline at %d\n", i);
+	//}
+
 	return bufferHandle;
 }
 
@@ -122,6 +139,7 @@ void Huffman::serializeTree(const ByteData* const node) const
 
 void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 {
+	bool init = false;
 	int i = 0;
 	for(i = 0; i < bufferSize; ++i)
 	{
@@ -150,11 +168,19 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 			//printf("Stack size after pops and push:%d\n", charStack.size());
 
 			if(charStack.size() == 1){
-				root = &charStack.top();
+				if(!init)
+					init = true;
+				else
+				{
+					root = &charStack.top();
+					break;
+				}
+
+				//root = &charStack.top();
 
 				//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
 
-				break;
+				//break;
 			}
 		}
 
@@ -182,7 +208,7 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 	//	}
 
 	//}
-
+	//printf("Char num:%d\n", root->getLeftNode()->getLeftNode()->getRightNode()->getValue().getData());
 	//return (const unsigned char* const)builder.c_str();
 	dataIndex = i + 1;
 }
@@ -190,30 +216,73 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long bufferSize)
 {
 	int meta = (int)fileBuffer[bufferSize - 1];
-	//printf("Meta:%d\n", meta);
+	printf("Meta:%d\n", meta);
 	std::string builder = "";
 	std::string returnString = "";
 
 	for(int i = dataIndex; i < bufferSize - 1; ++i)
 		builder += std::bitset<CHAR_BIT>(fileBuffer[i]).to_string().c_str();
 
-	int endIndex = builder.length() - (meta - 1);
+	printf("Builder:%s\n", builder.c_str());
+
+	int endIndex = builder.length();
+	if(meta > 0)
+		endIndex = builder.length() - (meta - 1);
 	const ByteData* trav = root;
-	for(int i = 0; i < endIndex; ++i)
+
+	//for(int i = 0; i < endIndex; ++i)
+	//{
+	//	if(trav->getValue().getData() != NULL)
+	//	{
+	//		returnString += trav->getValue().getData();
+	//		//printf("Added char:%c\n", trav->getValue().getData());
+	//		trav = root;
+
+	//		if(builder[i] == '0')
+	//		{
+	//			trav = trav->getLeftNode();
+	//		}
+	//		else if(builder[i] == '1')
+	//		{
+	//			trav = trav->getRightNode();
+	//		}
+	//	}
+	//	else if(builder[i] == '0')
+	//	{
+	//		trav = trav->getLeftNode();
+	//	}
+	//	else if(builder[i] == '1')
+	//	{
+	//		trav = trav->getRightNode();
+	//	}
+	//}
+
+	for(int i = 0; i < builder.length(); ++i)
 	{
-		if(trav->getValue().getData() != NULL)
+		if(root->getValue().getData() != NULL)
+			returnString += root->getValue().getData();
+		else
 		{
-			returnString += trav->getValue().getData();
-			//printf("Added char:%c\n", trav->getValue().getData());
-			trav = root;
-		}
-		if(builder[i] == '0')
-		{
-			trav = trav->getLeftNode();
-		}
-		else if(builder[i] == '1')
-		{
-			trav = trav->getRightNode();
+			if(builder[i] == '0')
+			{
+				trav = trav->getLeftNode();
+
+				if(trav->getValue().getData() != NULL)
+				{
+					returnString += trav->getValue().getData();
+					trav = root;
+				}
+			}
+			if(builder[i] == '1')
+			{
+				trav = trav->getRightNode();
+
+				if(trav->getValue().getData() != NULL)
+				{
+					returnString += trav->getValue().getData();
+					trav = root;
+				}
+			}
 		}
 	}
 

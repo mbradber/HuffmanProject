@@ -66,7 +66,10 @@ const unsigned char* const BitHandler::getBuffer()
 		byteBuffer.push_back(currentByte);
 
 	/*Save the meta data about number of padded bits in the last byte as a byte*/
-	byteBuffer.push_back((unsigned char)(position + 1));
+	if(position == 7)
+		byteBuffer.push_back((unsigned char)(0));
+	else
+		byteBuffer.push_back((unsigned char)(position + 1));
 
 	if(bufferHandle != NULL)
 		free(bufferHandle);
