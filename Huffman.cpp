@@ -139,12 +139,16 @@ void Huffman::serializeTree(const ByteData* const node) const
 
 void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 {
+	short numChars = (short)fileBuffer[0];
+	short numCharsOnStack = 0;
 	bool init = false;
-	int i = 0;
-	for(i = 0; i < bufferSize; ++i)
+	int i = 1;
+	for(; i < bufferSize; ++i)
 	{
-		if(fileBuffer[i] != NULL){
+		if(fileBuffer[i] != NULL)
+		{
 			charStack.push(ByteData(fileBuffer[i]));
+			++numCharsOnStack;
 			//printf("Pushed char %c at index %i and stack size is now %d\n", fileBuffer[i], i, charStack.size());
 		}
 		else if(charStack.size() >= 2)
@@ -167,14 +171,12 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 			//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
 			//printf("Stack size after pops and push:%d\n", charStack.size());
 
-			if(charStack.size() == 1){
-				if(!init)
-					init = true;
-				else
-				{
+			if(charStack.size() == 1 && numCharsOnStack == numChars){
+				//if(!init)
+				//	init = true;
+				//else
 					root = &charStack.top();
 					break;
-				}
 
 				//root = &charStack.top();
 
@@ -208,7 +210,8 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 	//	}
 
 	//}
-	//printf("Char num:%d\n", root->getLeftNode()->getLeftNode()->getRightNode()->getValue().getData());
+	printf("NumChars:%d, NumCharsOnStack:%d\n", numChars, numCharsOnStack);
+	//printf("Char num:%c\n", root->getRightNode()->getRightNode()->getRightNode()->getRightNode()->getValue().getData());
 	//return (const unsigned char* const)builder.c_str();
 	dataIndex = i + 1;
 }
