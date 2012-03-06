@@ -226,11 +226,11 @@ std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long buff
 	for(int i = dataIndex; i < bufferSize - 1; ++i)
 		builder += std::bitset<CHAR_BIT>(fileBuffer[i]).to_string().c_str();
 
-	printf("Builder:%s\n", builder.c_str());
+	//printf("Builder:%s\n", builder.c_str());
 
 	int endIndex = builder.length();
 	if(meta > 0)
-		endIndex = builder.length() - (meta - 1);
+		endIndex = builder.length() - meta;
 	const ByteData* trav = root;
 
 	//for(int i = 0; i < endIndex; ++i)
@@ -260,7 +260,7 @@ std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long buff
 	//	}
 	//}
 
-	for(int i = 0; i < builder.length(); ++i)
+	for(int i = 0; i < endIndex; ++i)
 	{
 		if(root->getValue().getData() != NULL)
 			returnString += root->getValue().getData();
