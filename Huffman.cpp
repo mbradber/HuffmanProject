@@ -3,14 +3,17 @@
 #include<sstream>
 #include<list>
 #include<bitset>
+#include<cstring>
+#include<cstdlib>
 
 Huffman::Huffman()
-	:dataList(NUM_BYTES), lookupList(NUM_BYTES), countedOnce(false), root(NULL), dataIndex(0)
+	:dataList(NUM_BYTES), lookupList(NUM_BYTES), countedOnce(false), 
+	root(NULL), dataIndex(0), numSerialized(0)
 {
-	for(int i = 0; i < NUM_BYTES; ++i)
+	for(short i = 0; i < NUM_BYTES; ++i)
 	{
-		dataList[i].setValue(ByteFrequency((unsigned char)i, 0));
-		lookupList[i].setValue(ByteFrequency((unsigned char)i, 0));
+		dataList[i].setValue(ByteFrequency(i, 0));
+		lookupList[i].setValue(ByteFrequency(i, 0));
 	}
 
 }
@@ -46,7 +49,7 @@ void Huffman::buildTree()
 		ByteData* const b = new ByteData(dataList.back());
 		dataList.pop_back();
 
-		ByteData newNode(ByteFrequency(0, a->getValue().getFrequency() + b->getValue().getFrequency()));
+		ByteData newNode(ByteFrequency(NIL, a->getValue().getFrequency() + b->getValue().getFrequency()));
 		newNode.setLeftNode(a);
 		newNode.setRightNode(b);
 
@@ -54,7 +57,7 @@ void Huffman::buildTree()
 		std::sort(dataList.begin(), dataList.end());
 	}
 	root = &dataList.front();
-
+	
 	if(root == NULL){
 		printf("Empty tree, exiting program");
 		exit(-1);
@@ -63,14 +66,21 @@ void Huffman::buildTree()
 
 void Huffman::generateCodes(const ByteData* node, std::string prefix) const
 {
+	if(root->getValue().getData() != NIL)
+	{
+		root->setCode("0");
+		lookupList[0].setCode("0");
+		return;
+	}
+
 	if(node->getLeftNode() != 0)
 		generateCodes(node->getLeftNode(), prefix + "0");
 
 	node->setCode(prefix);
-	if(node->getValue().getData() != 0)
+	if(node->getValue().getData() != NIL)
 	{
-		lookupList[(int)node->getValue().getData()].setCode(node->getCode().c_str());
-		printf("%c : %s\n", node->getValue().getData(), node->getCode().c_str());
+		lookupList[node->getValue().getData()].setCode(node->getCode().c_str());
+		printf("%d : %s\n", (unsigned char)node->getValue().getData(), node->getCode().c_str());
 	}
 
 	if(node->getRightNode() != 0)
@@ -96,37 +106,26 @@ void Huffman::printFrequency() const
 	});
 }
 
-const unsigned char* const Huffman::getSerializedTree() const
+const std::string const Huffman::getSerializedTree()
 {
 	serializeTree(root);
-
-	unsigned char* bufferHandle = (unsigned char*)malloc(charList.size());
+	//unsigned char* bufferHandle = (unsigned char*)malloc(charList.size());
+	std::stringstream builder;
 	int counter = 0;
 
-	for(std::list<unsigned char>::const_iterator itr = charList.begin(); itr != charList.end(); ++itr)
-		bufferHandle[counter++] = *itr;
+	for(std::list<int>::const_iterator itr = charList.begin(); itr != charList.end(); ++itr)
+		builder << *itr << ",";
+		//bufferHandle[counter++] = (unsigned char)(*itr);
 
 	//append null terminator to c string
-	bufferHandle[charList.size()] = '\0';
+	//bufferHandle[charList.size()] = '\0';
 
-	//for(int i = 0; i < charList.size(); ++i)
-	//{
-	//	if(bufferHandle[i] == '\r')
-	//		printf("Return at %d\n", i);
-	//	if(bufferHandle[i] == 't')
-	//		printf("t at %d\n", i);
-	//	if(bufferHandle[i] == '\0')
-	//		printf("NULL at %d\n", i);
-	//	if(bufferHandle[i] == 'h')
-	//		printf("h at %d\n", i);
-	//	if(bufferHandle[i] == '\n')
-	//		printf("newline at %d\n", i);
-	//}
-
-	return bufferHandle;
+	//return bufferHandle;
+	//std::cout << builder.str() << std::endl;
+	return builder.str();
 }
 
-void Huffman::serializeTree(const ByteData* const node) const
+void Huffman::serializeTree(const ByteData* const node)
 {
 	if(node->getLeftNode() != 0)
 		serializeTree(node->getLeftNode());
@@ -134,86 +133,104 @@ void Huffman::serializeTree(const ByteData* const node) const
 	if(node->getRightNode() != 0)
 		serializeTree(node->getRightNode());
 
+	if(node->getValue().getData() != NIL) ++numSerialized;
+
 	charList.push_back(node->getValue().getData());
 }
 
 void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 {
 	short numChars = (short)fileBuffer[0];
+	if(numChars == 0) numChars = 256;
+
 	short numCharsOnStack = 0;
-	bool init = false;
-	int i = 1;
-	for(; i < bufferSize; ++i)
+	char* tokenize = (char*)&(fileBuffer[1]);
+	dataIndex = 1;
+
+	char* token = strtok(tokenize, ",");
+
+	while(token != NULL)
 	{
-		if(fileBuffer[i] != NULL)
+		dataIndex += strlen(token) + 1;
+		int stackable = atoi(token);
+
+		if(stackable != NIL)
 		{
-			charStack.push(ByteData(fileBuffer[i]));
+			charStack.push(ByteData(stackable));
 			++numCharsOnStack;
-			//printf("Pushed char %c at index %i and stack size is now %d\n", fileBuffer[i], i, charStack.size());
 		}
 		else if(charStack.size() >= 2)
 		{
-			//printf("Stack size before pops:%d\n", charStack.size());
 			ByteData* a = new ByteData(charStack.top());
 			charStack.pop();
 			ByteData* b = new ByteData(charStack.top());
 			charStack.pop();
 
-			//printf("Popped %c\n", a->getValue().getData());
-			//printf("Popped %c\n", b->getValue().getData());
-
-			ByteData* newNode = new ByteData(NULL);
+			ByteData* newNode = new ByteData(NIL);
 			newNode->setRightNode(a);
 			newNode->setLeftNode(b);
 
 			charStack.push(*newNode);
-
-			//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
-			//printf("Stack size after pops and push:%d\n", charStack.size());
-
-			if(charStack.size() == 1 && numCharsOnStack == numChars){
-				//if(!init)
-				//	init = true;
-				//else
-					root = &charStack.top();
-					break;
-
-				//root = &charStack.top();
-
-				//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
-
-				//break;
-			}
 		}
+
+
+		if(charStack.size() == 1 && numCharsOnStack == numChars)
+		{
+			root = &charStack.top();
+			break;
+		}
+
+		token = strtok(NULL, ",");
+	}
+
+
+	//bool init = false;
+	//int i = 1;
+	//for(; i < bufferSize; ++i)
+	//{
+	//	if(fileBuffer[i] != NULL)
+	//	{
+	//		charStack.push(ByteData(fileBuffer[i]));
+	//		++numCharsOnStack;
+	//		//printf("Pushed char %c at index %i and stack size is now %d\n", fileBuffer[i], i, charStack.size());
+	//	}
+	//	else if(charStack.size() >= 2)
+	//	{
+	//		//printf("Stack size before pops:%d\n", charStack.size());
+	//		ByteData* a = new ByteData(charStack.top());
+	//		charStack.pop();
+	//		ByteData* b = new ByteData(charStack.top());
+	//		charStack.pop();
+
+	//		//printf("Popped %c\n", a->getValue().getData());
+	//		//printf("Popped %c\n", b->getValue().getData());
+
+	//		ByteData* newNode = new ByteData(NULL);
+	//		newNode->setRightNode(a);
+	//		newNode->setLeftNode(b);
+
+	//		charStack.push(*newNode);
+
+	//		//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
+	//		//printf("Stack size after pops and push:%d\n", charStack.size());
+
+	//		if(charStack.size() == 1 && numCharsOnStack == numChars)
+	//		{
+	//			root = &charStack.top();
+	//			break;
+	//		}
+	//	}
 
 		//printf("Got here\n");
 		//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
-	}
-
-	//printf("Node:%c\n", root->getRightNode()->getLeftNode()->getValue().getData());
-	//std::string builder = "";
-	//for(i += 1; i < bufferSize; ++i)
-	//{
-	//	int meta = 0;
-	//	if(i == bufferSize - 2)
-	//	{
-	//		meta = (int)fileBuffer[bufferSize - 1];
-
-	//		//....
-	//	}
-	//	else
-	//	{
-	//		int decValue = (int)fileBuffer[i];
-	//		std::string asBinary = std::bitset<CHAR_BIT>(decValue).to_string();
-	//		
-	//		builder += asBinary;
-	//	}
-
 	//}
+	//dataIndex += 2;
 	printf("NumChars:%d, NumCharsOnStack:%d\n", numChars, numCharsOnStack);
+	//printf("Root:%d\n", root->getRightNode()->getRightNode()->getRightNode()->getRightNode()->getValue().getData());
 	//printf("Char num:%c\n", root->getRightNode()->getRightNode()->getRightNode()->getRightNode()->getValue().getData());
 	//return (const unsigned char* const)builder.c_str();
-	dataIndex = i + 1;
+	//dataIndex = (int)token[strlen(token)] - (int)fileBuffer[0];
+	printf("Data index:%d\n", dataIndex);
 }
 
 std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long bufferSize)
@@ -262,7 +279,7 @@ std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long buff
 
 	for(int i = 0; i < endIndex; ++i)
 	{
-		if(root->getValue().getData() != NULL)
+		if(root->getValue().getData() != NIL)
 			returnString += root->getValue().getData();
 		else
 		{
@@ -270,9 +287,9 @@ std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long buff
 			{
 				trav = trav->getLeftNode();
 
-				if(trav->getValue().getData() != NULL)
+				if(trav->getValue().getData() != NIL)
 				{
-					returnString += trav->getValue().getData();
+					returnString += (char)trav->getValue().getData();
 					trav = root;
 				}
 			}
@@ -280,9 +297,9 @@ std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long buff
 			{
 				trav = trav->getRightNode();
 
-				if(trav->getValue().getData() != NULL)
+				if(trav->getValue().getData() != NIL)
 				{
-					returnString += trav->getValue().getData();
+					returnString += (char)trav->getValue().getData();
 					trav = root;
 				}
 			}

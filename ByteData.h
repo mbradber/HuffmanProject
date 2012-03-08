@@ -1,23 +1,25 @@
 #pragma once
 #include<iostream>
 
+#define NIL 256
+
 class ByteFrequency
 {
 public:
 	ByteFrequency();
 	ByteFrequency(const ByteFrequency& copyMe);
-	ByteFrequency(const unsigned char& pValue);
-	ByteFrequency(const unsigned char& pValue, const unsigned int& pFrequency);
+	ByteFrequency(const short& pValue);
+	ByteFrequency(const short& pValue, const unsigned int& pFrequency);
 
 	void Increment() const { ++frequency; }
-	const unsigned char getData() const { return data; }
+	const short getData() const { return data; }
 	const unsigned int getFrequency() const { return frequency; }
 
 	ByteFrequency& operator=(const ByteFrequency& rhs);
 	friend bool operator < (const ByteFrequency& lhs, const ByteFrequency& rhs);
 
 private:
-	unsigned char data;
+	short data;
 	mutable unsigned int frequency;
 };
 

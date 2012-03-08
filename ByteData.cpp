@@ -3,18 +3,18 @@
 /*ByteFrequency implementation*/
 
 ByteFrequency::ByteFrequency()
-	:data(0), frequency(0)
+	:data(NIL), frequency(0)
 {}
 
 ByteFrequency::ByteFrequency(const ByteFrequency& copyMe)
 	:data(copyMe.getData()), frequency(copyMe.getFrequency())
 {}
 
-ByteFrequency::ByteFrequency(const unsigned char& pValue)
+ByteFrequency::ByteFrequency(const short& pValue)
 	:data(pValue), frequency(1)
 {}
 
-ByteFrequency::ByteFrequency(const unsigned char& pValue, const unsigned int& pFrequency)
+ByteFrequency::ByteFrequency(const short& pValue, const unsigned int& pFrequency)
 	:data(pValue), frequency(pFrequency)
 {}
 
