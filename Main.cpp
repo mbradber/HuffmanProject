@@ -1,99 +1,105 @@
 #include<iostream>
+#include<bitset>
 #include<time.h>
 #include"FileHandler.h"
 #include"Huffman.h"
 #include"BitHandler.h"
-#include<bitset>
 
-#define d
+#define ENCODE 0
+#define DECODE 1
 
 int main(int argc, char** argv)
 {
-	//FileHandler fileHandler("C:\\Users\\Acer\\DataSets\\ws15.docx", "C:\\Users\\Acer\\DataSets\\wsout.out");
-	//FileHandler fileHandler2("C:\\Users\\Acer\\DataSets\\ws15_d.docx", "C:\\Users\\Acer\\DataSets\\results.txt");
+	/*Handle interactive prompt options*/
 
-	//fileHandler.loadFile();
-	//fileHandler2.loadFile();
+	bool branch;
+	printf("Encode or Decode(e or d)?");
+	std::string mode = "";
+	std::cin >> mode;
 
-	//const unsigned char* buff1 = fileHandler.getBuffer();
-	//const unsigned char* buff2 = fileHandler2.getBuffer();
+	if(!mode.compare("Encode") || !mode.compare("encode") || !mode.compare("e"))
+		branch = ENCODE;
+	else if(!mode.compare("Decode") || !mode.compare("decode") || !mode.compare("d"))
+		branch = DECODE;
+	else
+	{
+		printf("Invalid mode specified, exiting program\n");
+		return -1;
+	}
 
-	//for(int i = 0; i < fileHandler2.getFileSize(); ++i){
-	//	if((int)buff2[i] == 197 && (int)buff2[i+1] == 208 && (int)buff2[i+2] == 237){
-	//		printf("Sequence found at index %d\n", i);
-	//		//printf("Int version of char:%d", (int)buff1[fileHandler.getFileSize() / 2]);
-	//		//printf("Int version of char:%d", (int)buff1[fileHandler.getFileSize() / 2 + 1]);
-	//		//printf("Int version of char:%d", (int)buff1[fileHandler.getFileSize() / 2 + 2]);
-	//	}
-	//}
+	printf("Enter an input file path:");
+	std::string inputFile = "";
+	std::cin >> inputFile;
 
-	//FileHandler fileHandler("C:\\Users\\Acer\\DataSets\\ws15.docx", "C:\\Users\\Acer\\DataSets\\nullTest.txt");
-	//BitHandler bitHandler;
-	//bitHandler.stringToBits("00000000000000000110010100000000");
-	//const unsigned char* const bitBuff = bitHandler.getBuffer();
-	//fileHandler.writeToFile(bitBuff, bitHandler.getBufferSize());
+	printf("Enter an output file path:");
+	std::string outputFile = "";
+	std::cin >> outputFile;
 
-#ifdef e
-	//if(!strcmp(argv[1], "encode")){
+	/*Execute the encode/decode branch given by user*/
+
+	if(branch == ENCODE)
+	{
+		printf("Encoding...\n");
 		Huffman huff;
 		BitHandler bitHandler;
-		FileHandler fileHandler("C:\\Users\\Acer\\DataSets\\artist.jpg", "C:\\Users\\Acer\\DataSets\\artist.out");
+		FileHandler fileHandler(inputFile, outputFile);
+		/*Load file into memory*/
 		fileHandler.loadFile();
 
-		unsigned t0 = clock(), t1;
-
+		/*Count the frequency of bytes in order to then generate Huffman codes for each byte*/
 		huff.countBytes(fileHandler.getBuffer(), fileHandler.getFileSize());
 		huff.generateCodes();
+
 		std::vector<ByteData> checkList = huff.getLookupList();
 		const unsigned char* const fileBuffer = fileHandler.getBuffer();
-		printf("File buffer:%d\n", strlen((const char*)fileBuffer));
-		std::string builder = "";
 
-		for(unsigned int i = 0; i < fileHandler.getFileSize(); ++i){
+		/*Iterate through the bytes of the file and output its Huffman code*/
+		std::string builder = "";
+		for(unsigned int i = 0; i < fileHandler.getFileSize(); ++i)
 			builder.append(checkList[(int)fileBuffer[i]].getCode());
-			if(fileBuffer[i] == NULL)
-				//printf("Byte is NULL\n");
-			//printf("Appending code:%s\n", checkList[(int)fileBuffer[i]].getCode().c_str());
-		}
 		bitHandler.stringToBits(builder);
 
-		//printf("Builder:%s\n", builder.c_str());
-
+		/*Acquire the binary representation of the Huffman encoding and the 
+		  Huffman tree in order to write them to file*/
 		const unsigned char* const bitBuff = bitHandler.getBuffer();
-		const std::string const treeBuff = huff.getSerializedTree();
-		//int charCount = 0;
-		//for(int i = 0; i < huff.getSerializedSize(); ++i)
-		//	if(treeBuff[i] != NULL)
-		//		++charCount;
-		printf("Count %d\n", huff.getSerializedSize());
+		const std::string treeBuff = huff.getSerializedTree();
+
+		/*Also store the number of unique characters that appeared in the file*/
 		std::string numCharString = "";
 		numCharString += (unsigned char)huff.getSerializedSize();
 
-		printf("Serialized tree:%s\n", (unsigned char*)treeBuff.c_str());
-		
+		/*Write data to output file*/
 		fileHandler.writeToFile((unsigned char*)numCharString.c_str(), 1);
 		fileHandler.writeToFile((unsigned char*)treeBuff.c_str(), treeBuff.size());
 		fileHandler.writeToFile(bitBuff, bitHandler.getBufferSize());
 
-		t1 = clock() - t0;
-		printf("Exe Time: %d\n", t1);
-		printf("File encoded\n");
-#endif
-//	}
-//	else if(!strcmp(argv[1], "decode")){
-#ifdef d
+		/*Prompt completion*/
+		printf("File encoded.\n");
+	}
+
+	else if(branch == DECODE)
+	{
+		printf("Decoding...\n");
 		Huffman huff;
-		FileHandler fileHandler("C:\\Users\\Acer\\DataSets\\artist.out", "C:\\Users\\Acer\\DataSets\\artist_d.jpg");
+		FileHandler fileHandler(inputFile, outputFile);
+
+		/*Load file into memory*/
 		fileHandler.loadFile();
+
+		/*Load the serialized Huffman tree into memory and use it to decode the rest of the
+		  serialized file*/
 		huff.loadTree(fileHandler.getBuffer(), fileHandler.getFileSize());
 		std::string decodedFile =
 			huff.decodeFile(fileHandler.getBuffer(), fileHandler.getFileSize());
-		fileHandler.writeToFile((unsigned char*)decodedFile.c_str(), decodedFile.size());
-		printf("File decoded.\n");
-		
-//	}
-#endif
 
-	getchar();
+		/*Write the decoded string out to a file*/
+		fileHandler.writeToFile((unsigned char*)decodedFile.c_str(), decodedFile.size());
+
+		/*Prompt completion*/
+		printf("File decoded.\n");
+	}
+
+	//getchar();
+	//getchar();
 	return 0;
 }

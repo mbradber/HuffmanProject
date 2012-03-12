@@ -1,6 +1,7 @@
 #include "FileHandler.h"
-
-
+/*---------------------------------------------------------------------
+  Constructor
+  ---------------------------------------------------------------------*/
 FileHandler::FileHandler(std::string fileIn, std::string fileOut)
 	:filenameIn(fileIn), fileNameOut(fileOut), iStream(fileIn, std::ios::in | std::ios::binary | std::ios::ate), 
 	buffer(NULL), fileSize(0), opened(false)
@@ -17,7 +18,9 @@ FileHandler::FileHandler(std::string fileIn, std::string fileOut)
 		exit(-1);
 	}
 }
-
+/*---------------------------------------------------------------------
+  Load a file on disk into memory and record the file size
+  ---------------------------------------------------------------------*/
 void FileHandler::loadFile()
 {
 	iStream.seekg(0, std::ios::beg);
@@ -39,7 +42,9 @@ void FileHandler::loadFile()
 	if(iStream.is_open())
 		iStream.close();
 }
-
+/*---------------------------------------------------------------------
+  Write the buffer argument to the output file associated with this object
+  ---------------------------------------------------------------------*/
 void FileHandler::writeToFile(const unsigned char* const byteBuffer, int bufferSize)
 {
 	if(!opened)
@@ -62,11 +67,14 @@ void FileHandler::writeToFile(const unsigned char* const byteBuffer, int bufferS
 	oStream.write((const char*)byteBuffer, bufferSize);
 	oStream.close();
 }
-
+/*---------------------------------------------------------------------
+  Destructor
+  ---------------------------------------------------------------------*/
 FileHandler::~FileHandler()
 {
 	if(iStream.is_open())
 		iStream.close();
 	if(oStream.is_open())
 		oStream.close();
+	//delete[] buffer;
 }

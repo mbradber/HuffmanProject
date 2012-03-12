@@ -18,7 +18,7 @@ public:
 	void display() const { display(root); }
 	void printFrequency() const;
 	const std::vector<ByteData>& getLookupList() const { return lookupList; }
-	const std::string const getSerializedTree();
+	const std::string getSerializedTree();
 	const int getSerializedSize() const { return numSerialized; }
 	void loadTree(const unsigned char* const fileBuffer, long bufferSize);
 	std::string decodeFile(const unsigned char* const fileBuffer, long bufferSize);
@@ -27,7 +27,7 @@ private:
 	void buildTree();
 	void generateCodes(const ByteData* node, std::string prefix) const;
 	void display(const ByteData* const node) const;
-	void serializeTree(const ByteData* const node);
+	void serializeTree(ByteData* node);
 
 	std::vector<ByteData> dataList;
 	std::vector<ByteData> lookupList;

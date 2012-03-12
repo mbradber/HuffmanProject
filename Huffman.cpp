@@ -5,7 +5,9 @@
 #include<bitset>
 #include<cstring>
 #include<cstdlib>
-
+/*---------------------------------------------------------------------
+  Constructor
+  ---------------------------------------------------------------------*/
 Huffman::Huffman()
 	:dataList(NUM_BYTES), lookupList(NUM_BYTES), countedOnce(false), 
 	root(NULL), dataIndex(0), numSerialized(0)
@@ -17,7 +19,11 @@ Huffman::Huffman()
 	}
 
 }
-
+/*---------------------------------------------------------------------
+  Iterate through the contents of the 'buffer' argument and record the 
+  frequency of each byte, then sort the dataList of bytes by their 
+  frequencies and remove the bytes with 0 occurrences from the list.
+  ---------------------------------------------------------------------*/
 void Huffman::countBytes(const unsigned char* const buffer, long bufferSize)
 {
 	if(!countedOnce)
@@ -39,7 +45,11 @@ void Huffman::countBytes(const unsigned char* const buffer, long bufferSize)
 	//build the Huffman tree
 	buildTree();
 }
-
+/*---------------------------------------------------------------------
+  Cycle through the list and repeatedly take the two nodes of the lowest
+  frequency, remove them from the list, then create a new node with these
+  two nodes as its children with the frequency being the sum of its two children.
+  ---------------------------------------------------------------------*/
 void Huffman::buildTree()
 {
 	while(dataList.size() > 1)
@@ -63,7 +73,11 @@ void Huffman::buildTree()
 		exit(-1);
 	}
 }
-
+/*---------------------------------------------------------------------
+  Recurse through the tree in depth first order, and collect the list of bits
+  as a path from the root (where 0 means left branch, and 1 means right). 
+  Whenever a leaf is hit, store the path of bits as its code.  
+  ---------------------------------------------------------------------*/
 void Huffman::generateCodes(const ByteData* node, std::string prefix) const
 {
 	if(root->getValue().getData() != NIL)
@@ -77,16 +91,14 @@ void Huffman::generateCodes(const ByteData* node, std::string prefix) const
 		generateCodes(node->getLeftNode(), prefix + "0");
 
 	node->setCode(prefix);
+
 	if(node->getValue().getData() != NIL)
-	{
 		lookupList[node->getValue().getData()].setCode(node->getCode().c_str());
-		printf("%d : %s\n", (unsigned char)node->getValue().getData(), node->getCode().c_str());
-	}
 
 	if(node->getRightNode() != 0)
 		generateCodes(node->getRightNode(), prefix + "1");
 }
-
+/*---------------------------------------------------------------------*/
 void Huffman::display(const ByteData* const node) const
 {
 	if(node->getLeftNode() != 0)
@@ -97,7 +109,7 @@ void Huffman::display(const ByteData* const node) const
 	if(node->getRightNode() != 0)
 		display(node->getRightNode());
 }
-
+/*---------------------------------------------------------------------*/
 void Huffman::printFrequency() const
 {
 	std::for_each(dataList.begin(), dataList.end(), [](ByteData b){
@@ -105,27 +117,26 @@ void Huffman::printFrequency() const
 			printf("Byte:%c, Frequency:%d\n", b.getValue().getData(), b.getValue().getFrequency());
 	});
 }
-
-const std::string const Huffman::getSerializedTree()
+/*---------------------------------------------------------------------
+  Return a list of comma separated values containing the Huffman tree
+  in depth first, post order.
+  ---------------------------------------------------------------------*/
+const std::string Huffman::getSerializedTree()
 {
 	serializeTree(root);
-	//unsigned char* bufferHandle = (unsigned char*)malloc(charList.size());
 	std::stringstream builder;
 	int counter = 0;
 
 	for(std::list<int>::const_iterator itr = charList.begin(); itr != charList.end(); ++itr)
 		builder << *itr << ",";
-		//bufferHandle[counter++] = (unsigned char)(*itr);
 
-	//append null terminator to c string
-	//bufferHandle[charList.size()] = '\0';
-
-	//return bufferHandle;
-	//std::cout << builder.str() << std::endl;
 	return builder.str();
 }
-
-void Huffman::serializeTree(const ByteData* const node)
+/*---------------------------------------------------------------------
+  Store the values of the Huffman tree in depth first, post order into a 
+  list.
+  ---------------------------------------------------------------------*/
+void Huffman::serializeTree(ByteData* node)
 {
 	if(node->getLeftNode() != 0)
 		serializeTree(node->getLeftNode());
@@ -136,8 +147,23 @@ void Huffman::serializeTree(const ByteData* const node)
 	if(node->getValue().getData() != NIL) ++numSerialized;
 
 	charList.push_back(node->getValue().getData());
-}
 
+	/*Clean up*/
+	//if(node->getParentNode() != NULL)
+	//{
+	//	if(node->getParentNode()->getLeftNode() == node)
+	//		node->getParentNode()->setLeftNode(NULL);
+	//	else if(node->getParentNode()->getRightNode() == node)
+	//		node->getParentNode()->setRightNode(NULL);
+	//}
+
+	//delete node;
+	//node = NULL;
+}
+/*---------------------------------------------------------------------
+  Used for decoding: Read a serialized file and load the Huffman tree into
+  memory.
+  ---------------------------------------------------------------------*/
 void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 {
 	short numChars = (short)fileBuffer[0];
@@ -173,7 +199,6 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 			charStack.push(*newNode);
 		}
 
-
 		if(charStack.size() == 1 && numCharsOnStack == numChars)
 		{
 			root = &charStack.top();
@@ -183,104 +208,42 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 		token = strtok(NULL, ",");
 	}
 
-
-	//bool init = false;
-	//int i = 1;
-	//for(; i < bufferSize; ++i)
-	//{
-	//	if(fileBuffer[i] != NULL)
-	//	{
-	//		charStack.push(ByteData(fileBuffer[i]));
-	//		++numCharsOnStack;
-	//		//printf("Pushed char %c at index %i and stack size is now %d\n", fileBuffer[i], i, charStack.size());
-	//	}
-	//	else if(charStack.size() >= 2)
-	//	{
-	//		//printf("Stack size before pops:%d\n", charStack.size());
-	//		ByteData* a = new ByteData(charStack.top());
-	//		charStack.pop();
-	//		ByteData* b = new ByteData(charStack.top());
-	//		charStack.pop();
-
-	//		//printf("Popped %c\n", a->getValue().getData());
-	//		//printf("Popped %c\n", b->getValue().getData());
-
-	//		ByteData* newNode = new ByteData(NULL);
-	//		newNode->setRightNode(a);
-	//		newNode->setLeftNode(b);
-
-	//		charStack.push(*newNode);
-
-	//		//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
-	//		//printf("Stack size after pops and push:%d\n", charStack.size());
-
-	//		if(charStack.size() == 1 && numCharsOnStack == numChars)
-	//		{
-	//			root = &charStack.top();
-	//			break;
-	//		}
-	//	}
-
-		//printf("Got here\n");
-		//printf("Top of stack now has children %c and %c\n", charStack.top().getLeftNode()->getValue().getData(), charStack.top().getRightNode()->getLeftNode()->getValue().getData());
-	//}
-	//dataIndex += 2;
-	printf("NumChars:%d, NumCharsOnStack:%d\n", numChars, numCharsOnStack);
-	//printf("Root:%d\n", root->getRightNode()->getRightNode()->getRightNode()->getRightNode()->getValue().getData());
-	//printf("Char num:%c\n", root->getRightNode()->getRightNode()->getRightNode()->getRightNode()->getValue().getData());
-	//return (const unsigned char* const)builder.c_str();
-	//dataIndex = (int)token[strlen(token)] - (int)fileBuffer[0];
-	printf("Data index:%d\n", dataIndex);
+	if(root == NULL)
+	{
+		printf("Error reading encoded file, check input file path.\n");
+		exit(-1);
+	}
 }
-
+/*---------------------------------------------------------------------
+  Cycle through the encoded bytes of the buffer argument and store their
+  binary values into a string. Then cycle through that string to traverse
+  the constructed Huffman Tree. When you stop at a leaf, store that leaf
+  in the return string.
+  ---------------------------------------------------------------------*/
 std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long bufferSize)
 {
+	/*The meta char is the last byte of the encoded file. This data 
+	  represents the number of 'padded' bits of the last byte (meaning
+	  they should not be used to traverse.)*/
 	int meta = (int)fileBuffer[bufferSize - 1];
-	printf("Meta:%d\n", meta);
 	std::string builder = "";
 	std::string returnString = "";
 
 	for(int i = dataIndex; i < bufferSize - 1; ++i)
 		builder += std::bitset<CHAR_BIT>(fileBuffer[i]).to_string().c_str();
 
-	//printf("Builder:%s\n", builder.c_str());
-
+	/*The endIndex will be the position in the file buffer to stop reading
+	  characters to traverse the Huffman tree*/
 	int endIndex = builder.length();
 	if(meta > 0)
 		endIndex = builder.length() - meta;
+
 	const ByteData* trav = root;
-
-	//for(int i = 0; i < endIndex; ++i)
-	//{
-	//	if(trav->getValue().getData() != NULL)
-	//	{
-	//		returnString += trav->getValue().getData();
-	//		//printf("Added char:%c\n", trav->getValue().getData());
-	//		trav = root;
-
-	//		if(builder[i] == '0')
-	//		{
-	//			trav = trav->getLeftNode();
-	//		}
-	//		else if(builder[i] == '1')
-	//		{
-	//			trav = trav->getRightNode();
-	//		}
-	//	}
-	//	else if(builder[i] == '0')
-	//	{
-	//		trav = trav->getLeftNode();
-	//	}
-	//	else if(builder[i] == '1')
-	//	{
-	//		trav = trav->getRightNode();
-	//	}
-	//}
 
 	for(int i = 0; i < endIndex; ++i)
 	{
 		if(root->getValue().getData() != NIL)
-			returnString += root->getValue().getData();
+			returnString += (char)root->getValue().getData();
 		else
 		{
 			if(builder[i] == '0')
@@ -308,7 +271,9 @@ std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long buff
 
 	return returnString;
 }
-
+/*---------------------------------------------------------------------
+  Destructor
+  ---------------------------------------------------------------------*/
 Huffman::~Huffman()
 {
 }

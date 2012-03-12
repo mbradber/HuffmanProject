@@ -37,9 +37,9 @@ public:
 	void setCode(const std::string& bitString) const { code = bitString; }
 
 	const ByteFrequency& getValue() const { return value; }
-	const ByteData* const getLeftNode() const { return leftNode; }
-	const ByteData* const getRightNode() const { return rightNode; }
-	const ByteData* const getParentNode() const { return parentNode; }
+	ByteData* getLeftNode() const { return leftNode; }
+	ByteData* getRightNode() const { return rightNode; }
+	ByteData* getParentNode() const { return parentNode; }
 	const std::string getCode() const { return code; }
 
 	friend bool operator < (const ByteData& lhs, const ByteData& rhs);
