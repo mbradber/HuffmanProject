@@ -76,5 +76,4 @@ FileHandler::~FileHandler()
 		iStream.close();
 	if(oStream.is_open())
 		oStream.close();
-	//delete[] buffer;
 }

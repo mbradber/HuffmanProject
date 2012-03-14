@@ -68,8 +68,10 @@ void Huffman::buildTree()
 	}
 	root = &dataList.front();
 	
-	if(root == NULL){
+	if(root == NULL)
+	{
 		printf("Empty tree, exiting program");
+		getchar();
 		exit(-1);
 	}
 }
@@ -211,6 +213,7 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
 	if(root == NULL)
 	{
 		printf("Error reading encoded file, check input file path.\n");
+		getchar();
 		exit(-1);
 	}
 }

@@ -7,6 +7,7 @@
 
 #define ENCODE 0
 #define DECODE 1
+#define MAX_BUFFER_SIZE 104857600 /*100 MB*/
 
 int main(int argc, char** argv)
 {
@@ -41,27 +42,17 @@ int main(int argc, char** argv)
 	{
 		printf("Encoding...\n");
 		Huffman huff;
-		BitHandler bitHandler;
 		FileHandler fileHandler(inputFile, outputFile);
 		/*Load file into memory*/
 		fileHandler.loadFile();
+
+		unsigned t0 = clock(), t1;
 
 		/*Count the frequency of bytes in order to then generate Huffman codes for each byte*/
 		huff.countBytes(fileHandler.getBuffer(), fileHandler.getFileSize());
 		huff.generateCodes();
 
-		std::vector<ByteData> checkList = huff.getLookupList();
-		const unsigned char* const fileBuffer = fileHandler.getBuffer();
-
-		/*Iterate through the bytes of the file and output its Huffman code*/
-		std::string builder = "";
-		for(unsigned int i = 0; i < fileHandler.getFileSize(); ++i)
-			builder.append(checkList[(int)fileBuffer[i]].getCode());
-		bitHandler.stringToBits(builder);
-
-		/*Acquire the binary representation of the Huffman encoding and the 
-		  Huffman tree in order to write them to file*/
-		const unsigned char* const bitBuff = bitHandler.getBuffer();
+		/*Acquire the binary representation of the Huffman tree in order to write it to a file*/
 		const std::string treeBuff = huff.getSerializedTree();
 
 		/*Also store the number of unique characters that appeared in the file*/
@@ -71,10 +62,31 @@ int main(int argc, char** argv)
 		/*Write data to output file*/
 		fileHandler.writeToFile((unsigned char*)numCharString.c_str(), 1);
 		fileHandler.writeToFile((unsigned char*)treeBuff.c_str(), treeBuff.size());
-		fileHandler.writeToFile(bitBuff, bitHandler.getBufferSize());
+
+		/*Iterate through the bytes of the file and output their Huffman codes as bytes
+		  to the output file*/
+		BitHandler bitHandler(outputFile);
+		std::vector<ByteData> checkList = huff.getLookupList();
+		const unsigned char* const fileBuffer = fileHandler.getBuffer();
+
+		std::string builder = "";
+		for(unsigned int i = 0; i < fileHandler.getFileSize(); ++i)
+		{
+			builder.append(checkList[(int)fileBuffer[i]].getCode());
+
+			if(builder.size() >= MAX_BUFFER_SIZE)
+			{
+				bitHandler.stringToBits(builder);
+				builder = "";
+			}
+		}
+		bitHandler.stringToBits(builder);
+		bitHandler.cleanUp();
 
 		/*Prompt completion*/
 		printf("File encoded.\n");
+		t1 = clock() - t0;
+		printf("Exe Time: %d\n", t1);
 	}
 
 	else if(branch == DECODE)
@@ -99,7 +111,7 @@ int main(int argc, char** argv)
 		printf("File decoded.\n");
 	}
 
-	//getchar();
-	//getchar();
+	getchar();
+	getchar();
 	return 0;
 }
