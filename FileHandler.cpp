@@ -1,9 +1,14 @@
 #include "FileHandler.h"
 /*---------------------------------------------------------------------
-  Constructor
+  Constructors
   ---------------------------------------------------------------------*/
+FileHandler::FileHandler()
+	:buffer(NULL), fileSize(0), opened(false)
+{
+}
+
 FileHandler::FileHandler(std::string fileIn, std::string fileOut)
-	:filenameIn(fileIn), fileNameOut(fileOut), iStream(fileIn, std::ios::in | std::ios::binary | std::ios::ate), 
+	:fileNameIn(fileIn), fileNameOut(fileOut), iStream(fileIn, std::ios::in | std::ios::binary | std::ios::ate), 
 	buffer(NULL), fileSize(0), opened(false)
 {
 	if(iStream.is_open())
@@ -67,6 +72,39 @@ void FileHandler::writeToFile(const unsigned char* const byteBuffer, int bufferS
 	oStream.write((const char*)byteBuffer, bufferSize);
 	oStream.close();
 }
+
+void FileHandler::openOutStream(bool append)
+{
+	if(append)
+		oStream.open(fileNameOut, std::ios::out | std::ios::binary | std::ios::ate | std::ios::app);
+	else
+		oStream.open(fileNameOut, std::ios::out | std::ios::binary);
+
+	if(!oStream.is_open())
+	{
+		printf("Could not open file for writing\n");
+		getchar();
+		exit(-1);
+	}
+}
+
+void FileHandler::openInStream()
+{
+	iStream.open(fileNameIn, std::ios::in | std::ios::binary | std::ios::ate);
+
+	if(iStream.is_open())
+	{
+		fileSize = (unsigned int)iStream.tellg();
+		buffer = new unsigned char[fileSize];
+	}
+	else
+	{
+		printf("Could not open the file for reading, exiting program\n");
+		getchar();
+		exit(-1);
+	}
+}
+
 /*---------------------------------------------------------------------
   Destructor
   ---------------------------------------------------------------------*/

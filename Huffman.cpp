@@ -5,6 +5,10 @@
 #include<bitset>
 #include<cstring>
 #include<cstdlib>
+
+#define ENCODE_BUFFER_SIZE 104857600 /*100 MB*/
+#define DECODE_BUFFER_SIZE 104857600 /*100 MB*/
+
 /*---------------------------------------------------------------------
   Constructor
   ---------------------------------------------------------------------*/
@@ -33,16 +37,16 @@ void Huffman::countBytes(const unsigned char* const buffer, long bufferSize)
 
 		countedOnce = true;
 	}
-	//sort the results
+	/*sort the results*/
 	std::sort(dataList.begin(), dataList.end());
-	//purge the zeros from the data list
+	/*purge the zeros from the data list*/
 	for(std::vector<ByteData>::iterator itr = dataList.begin(); itr != dataList.end(); ++itr)
 		if(itr->getValue().getFrequency() == 0)
 		{
 			dataList.erase(itr, dataList.end());
 			break;
 		}
-	//build the Huffman tree
+	/*build the Huffman tree*/
 	buildTree();
 }
 /*---------------------------------------------------------------------
@@ -100,25 +104,6 @@ void Huffman::generateCodes(const ByteData* node, std::string prefix) const
 	if(node->getRightNode() != 0)
 		generateCodes(node->getRightNode(), prefix + "1");
 }
-/*---------------------------------------------------------------------*/
-void Huffman::display(const ByteData* const node) const
-{
-	if(node->getLeftNode() != 0)
-		display(node->getLeftNode());
-
-	printf("%c : %d\n", (char)node->getValue().getData(), node->getValue().getFrequency());
-
-	if(node->getRightNode() != 0)
-		display(node->getRightNode());
-}
-/*---------------------------------------------------------------------*/
-void Huffman::printFrequency() const
-{
-	std::for_each(dataList.begin(), dataList.end(), [](ByteData b){
-		if(b.getValue().getFrequency() > 0)
-			printf("Byte:%c, Frequency:%d\n", b.getValue().getData(), b.getValue().getFrequency());
-	});
-}
 /*---------------------------------------------------------------------
   Return a list of comma separated values containing the Huffman tree
   in depth first, post order.
@@ -149,19 +134,28 @@ void Huffman::serializeTree(ByteData* node)
 	if(node->getValue().getData() != NIL) ++numSerialized;
 
 	charList.push_back(node->getValue().getData());
-
-	/*Clean up*/
-	//if(node->getParentNode() != NULL)
-	//{
-	//	if(node->getParentNode()->getLeftNode() == node)
-	//		node->getParentNode()->setLeftNode(NULL);
-	//	else if(node->getParentNode()->getRightNode() == node)
-	//		node->getParentNode()->setRightNode(NULL);
-	//}
-
-	//delete node;
-	//node = NULL;
 }
+
+void Huffman::encodeFile(const unsigned char* const fileBuffer, unsigned int fileSize, std::string outputFile)
+{
+	BitHandler bitHandler(outputFile);
+	std::string builder = "";
+
+	for(unsigned int i = 0; i < fileSize; ++i)
+	{
+		builder.append(lookupList[(int)fileBuffer[i]].getCode());
+
+		if(builder.size() >= ENCODE_BUFFER_SIZE)
+		{
+			bitHandler.stringToBits(builder);
+			builder = "";
+		}
+	}
+
+	bitHandler.stringToBits(builder);
+	bitHandler.cleanUp();
+}
+
 /*---------------------------------------------------------------------
   Used for decoding: Read a serialized file and load the Huffman tree into
   memory.
@@ -223,57 +217,91 @@ void Huffman::loadTree(const unsigned char* const fileBuffer, long bufferSize)
   the constructed Huffman Tree. When you stop at a leaf, store that leaf
   in the return string.
   ---------------------------------------------------------------------*/
-std::string Huffman::decodeFile(const unsigned char* const fileBuffer, long bufferSize)
+void Huffman::decodeFile(const unsigned char* const fileBuffer, unsigned int fileSize, std::string outputFile)
 {
 	/*The meta char is the last byte of the encoded file. This data 
 	  represents the number of 'padded' bits of the last byte (meaning
 	  they should not be used to traverse.)*/
-	int meta = (int)fileBuffer[bufferSize - 1];
+	FileHandler fileHandler;
+	fileHandler.setOutputFile(outputFile);
+	fileHandler.openOutStream(false);
+
+	int meta = (int)fileBuffer[fileSize - 1];
+	std::string lastByte = std::bitset<CHAR_BIT>(fileBuffer[fileSize - 2]).to_string();
+
 	std::string builder = "";
 	std::string returnString = "";
+	const ByteData* trav = root;
 
-	for(int i = dataIndex; i < bufferSize - 1; ++i)
-		builder += std::bitset<CHAR_BIT>(fileBuffer[i]).to_string().c_str();
+	for(unsigned int i = dataIndex; i < fileSize - 2; ++i)
+	{
+		builder += std::bitset<CHAR_BIT>(fileBuffer[i]).to_string();
 
-	/*The endIndex will be the position in the file buffer to stop reading
-	  characters to traverse the Huffman tree*/
+		if(builder.size() >= DECODE_BUFFER_SIZE)
+		{
+			for(unsigned int j = 0; j < builder.length(); ++j)
+			{
+				if(builder[j] == '0')
+				{
+					trav = trav->getLeftNode();
+
+					if(trav->getValue().getData() != NIL)
+					{
+						returnString += (char)trav->getValue().getData();
+						trav = root;
+					}
+				}
+				if(builder[j] == '1')
+				{
+					trav = trav->getRightNode();
+
+					if(trav->getValue().getData() != NIL)
+					{
+						returnString += (char)trav->getValue().getData();
+						trav = root;
+					}
+				}
+			}
+
+			fileHandler.writeToFile((unsigned char*)returnString.c_str(), returnString.length());
+			builder = "";
+			returnString = "";
+		}
+	}
+
+	/*Clean up*/
+	builder += lastByte;
 	int endIndex = builder.length();
 	if(meta > 0)
 		endIndex = builder.length() - meta;
-
-	const ByteData* trav = root;
-
+	
 	for(int i = 0; i < endIndex; ++i)
 	{
-		if(root->getValue().getData() != NIL)
-			returnString += (char)root->getValue().getData();
-		else
+		if(builder[i] == '0')
 		{
-			if(builder[i] == '0')
-			{
-				trav = trav->getLeftNode();
+			trav = trav->getLeftNode();
 
-				if(trav->getValue().getData() != NIL)
-				{
-					returnString += (char)trav->getValue().getData();
-					trav = root;
-				}
+			if(trav->getValue().getData() != NIL)
+			{
+				returnString += (char)trav->getValue().getData();
+				trav = root;
 			}
-			if(builder[i] == '1')
-			{
-				trav = trav->getRightNode();
+		}
+		if(builder[i] == '1')
+		{
+			trav = trav->getRightNode();
 
-				if(trav->getValue().getData() != NIL)
-				{
-					returnString += (char)trav->getValue().getData();
-					trav = root;
-				}
+			if(trav->getValue().getData() != NIL)
+			{
+				returnString += (char)trav->getValue().getData();
+				trav = root;
 			}
 		}
 	}
 
-	return returnString;
+	fileHandler.writeToFile((unsigned char*)returnString.c_str(), returnString.length());
 }
+
 /*---------------------------------------------------------------------
   Destructor
   ---------------------------------------------------------------------*/

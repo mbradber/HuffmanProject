@@ -1,6 +1,7 @@
 #pragma once
 #include<list>
 #include<fstream>
+#include"FileHandler.h"
 
 class BitHandler
 {
@@ -18,7 +19,7 @@ private:
 
 	unsigned char currentByte;
 	short position;
-	std::ofstream oStream;
+	FileHandler fileHandler;
 	std::string outputFile;
 };
 

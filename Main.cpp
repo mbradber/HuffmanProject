@@ -7,7 +7,6 @@
 
 #define ENCODE 0
 #define DECODE 1
-#define MAX_BUFFER_SIZE 104857600 /*100 MB*/
 
 int main(int argc, char** argv)
 {
@@ -65,23 +64,7 @@ int main(int argc, char** argv)
 
 		/*Iterate through the bytes of the file and output their Huffman codes as bytes
 		  to the output file*/
-		BitHandler bitHandler(outputFile);
-		std::vector<ByteData> checkList = huff.getLookupList();
-		const unsigned char* const fileBuffer = fileHandler.getBuffer();
-
-		std::string builder = "";
-		for(unsigned int i = 0; i < fileHandler.getFileSize(); ++i)
-		{
-			builder.append(checkList[(int)fileBuffer[i]].getCode());
-
-			if(builder.size() >= MAX_BUFFER_SIZE)
-			{
-				bitHandler.stringToBits(builder);
-				builder = "";
-			}
-		}
-		bitHandler.stringToBits(builder);
-		bitHandler.cleanUp();
+		huff.encodeFile(fileHandler.getBuffer(), fileHandler.getFileSize(), outputFile);
 
 		/*Prompt completion*/
 		printf("File encoded.\n");
@@ -93,22 +76,25 @@ int main(int argc, char** argv)
 	{
 		printf("Decoding...\n");
 		Huffman huff;
-		FileHandler fileHandler(inputFile, outputFile);
+		FileHandler fileHandler;
+		fileHandler.setInputFile(inputFile);
+		fileHandler.openInStream();
 
 		/*Load file into memory*/
 		fileHandler.loadFile();
+		fileHandler.closeInputStream();
+
+		unsigned t0 = clock(), t1;
 
 		/*Load the serialized Huffman tree into memory and use it to decode the rest of the
 		  serialized file*/
 		huff.loadTree(fileHandler.getBuffer(), fileHandler.getFileSize());
-		std::string decodedFile =
-			huff.decodeFile(fileHandler.getBuffer(), fileHandler.getFileSize());
-
-		/*Write the decoded string out to a file*/
-		fileHandler.writeToFile((unsigned char*)decodedFile.c_str(), decodedFile.size());
+		huff.decodeFile(fileHandler.getBuffer(), fileHandler.getFileSize(), outputFile);
 
 		/*Prompt completion*/
 		printf("File decoded.\n");
+		t1 = clock() - t0;
+		printf("Exe Time: %d\n", t1);
 	}
 
 	getchar();

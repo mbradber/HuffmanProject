@@ -4,6 +4,8 @@
 #include<list>
 #include<stack>
 #include"ByteData.h"
+#include"BitHandler.h"
+#include"FileHandler.h"
 
 #define NUM_BYTES 256
 
@@ -15,18 +17,15 @@ public:
 
 	void countBytes(const unsigned char* const buffer, long bufferSize);
 	void generateCodes() const { generateCodes(root, ""); }
-	void display() const { display(root); }
-	void printFrequency() const;
-	const std::vector<ByteData>& getLookupList() const { return lookupList; }
 	const std::string getSerializedTree();
 	const int getSerializedSize() const { return numSerialized; }
 	void loadTree(const unsigned char* const fileBuffer, long bufferSize);
-	std::string decodeFile(const unsigned char* const fileBuffer, long bufferSize);
+	void decodeFile(const unsigned char* const fileBuffer, unsigned int fileSize, std::string outputFile);
+	void encodeFile(const unsigned char* const fileBuffer, unsigned int fileSize, std::string outputFile);
 
 private:
 	void buildTree();
 	void generateCodes(const ByteData* node, std::string prefix) const;
-	void display(const ByteData* const node) const;
 	void serializeTree(ByteData* node);
 
 	std::vector<ByteData> dataList;
